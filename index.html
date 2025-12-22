@@ -16,72 +16,63 @@
             font-family: sans-serif;
         }
 
-        .ui {
+        .ui-vertical {
             position: fixed;
-            bottom: env(safe-area-inset-bottom, 16px);
-            left: 0;
-            width: 100%;
-            padding: 12px;
+            right: env(safe-area-inset-right, 12px);
+            top: 50%;
+            transform: translateY(-50%);
             display: flex;
-            gap: 10px;
-            justify-content: space-around;
+            flex-direction: column;
+            gap: 14px;
             z-index: 9999;
         }
 
         .control {
-            flex: 1;
-            max-width: 32%;
             background: rgba(0,0,0,0.65);
-            color: white;
-            border-radius: 14px;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .arrows {
+            border-radius: 16px;
+            padding: 8px;
             display: flex;
-            justify-content: space-between;
-            margin-top: 6px;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
         }
 
         button {
-            width: 48%;
-            font-size: 22px;
-            padding: 10px 0;
-            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+            border-radius: 50%;
             border: none;
         }
+
     </style>
 </head>
 
 <body>
 
 <!-- UI HTML -->
-<div class="ui">
+<div class="ui-vertical">
+
     <div class="control">
-        Hat
-        <div class="arrows">
-            <button onclick="prevHat()">⬅️</button>
-            <button onclick="nextHat()">➡️</button>
-        </div>
+        <span>🎩</span>
+        <button onclick="prevHat()">⬆️</button>
+        <button onclick="nextHat()">⬇️</button>
     </div>
 
     <div class="control">
-        Scarf
-        <div class="arrows">
-            <button onclick="prevScarf()">⬅️</button>
-            <button onclick="nextScarf()">➡️</button>
-        </div>
+        <span>🧣</span>
+        <button onclick="prevScarf()">⬆️</button>
+        <button onclick="nextScarf()">⬇️</button>
     </div>
 
     <div class="control">
-        Gloves
-        <div class="arrows">
-            <button onclick="prevGloves()">⬅️</button>
-            <button onclick="nextGloves()">➡️</button>
-        </div>
+        <span>🧤</span>
+        <button onclick="prevGloves()">⬆️</button>
+        <button onclick="nextGloves()">⬇️</button>
     </div>
+
 </div>
+
 
 <a-scene
         embedded
@@ -94,29 +85,25 @@
         <a-entity
                 id="snowman"
                 gltf-model="assets/snowman.glb"
-                scale="0.5 0.5 0.5"
-                position="0 0 0">
+                scale="0.5 0.5 0.5">
         </a-entity>
 
         <!-- Hat -->
         <a-entity
                 id="hat"
-                scale="0.5 0.5 0.5"
-                position="0 1.2 0">
+                scale="0.5 0.5 0.5">
         </a-entity>
 
         <!-- Scarf -->
         <a-entity
                 id="scarf"
-                scale="0.5 0.5 0.5"
-                position="0 0.8 0">
+                scale="0.5 0.5 0.5">
         </a-entity>
 
         <!-- Gloves -->
         <a-entity
                 id="gloves"
-                scale="0.5 0.5 0.5"
-                position="0.3 0.6 0">
+                scale="0.5 0.5 0.5">
         </a-entity>
 
     </a-marker>
