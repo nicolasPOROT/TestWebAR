@@ -2,13 +2,12 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>TestWebAR</title>
     <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 </head>
-<body style="margin:0; overflow:hidden;">
+<body>
 <a-scene embedded arjs>
-    <a-marker preset="hiro">
+    <a-marker type="pattern" url="assets/qrcode.patt">
         <a-entity
                 gltf-model="url(assets/roblox_character.glb)"
                 scale="0.5 0.5 0.5"
@@ -20,3 +19,4 @@
 </a-scene>
 </body>
 </html>
+
