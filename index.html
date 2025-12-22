@@ -3,39 +3,194 @@
 <head>
     <meta charset="UTF-8">
 
-    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+
+    <!-- AR.js -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
 
     <style>
         body {
             margin: 0;
             overflow: hidden;
+            font-family: sans-serif;
+        }
+
+        .ui {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            z-index: 10;
+        }
+
+        .control {
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            user-select: none;
+        }
+
+        .arrows {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            font-size: 20px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
         }
     </style>
 </head>
 
 <body>
 
+<!-- UI HTML -->
+<div class="ui">
+    <div class="control">
+        Hat
+        <div class="arrows">
+            <button onclick="prevHat()">⬅️</button>
+            <button onclick="nextHat()">➡️</button>
+        </div>
+    </div>
+
+    <div class="control">
+        Scarf
+        <div class="arrows">
+            <button onclick="prevScarf()">⬅️</button>
+            <button onclick="nextScarf()">➡️</button>
+        </div>
+    </div>
+
+    <div class="control">
+        Gloves
+        <div class="arrows">
+            <button onclick="prevGloves()">⬅️</button>
+            <button onclick="nextGloves()">➡️</button>
+        </div>
+    </div>
+</div>
+
 <a-scene
         embedded
         vr-mode-ui="enabled: false"
         arjs="sourceType: webcam; debugUIEnabled: false;">
 
-    <!-- Marker Hiro -->
     <a-marker preset="hiro">
 
+        <!-- Snowman -->
         <a-entity
-                gltf-model="assets/roblox_character.glb"
+                id="snowman"
+                gltf-model="assets/snowman.glb"
                 scale="0.5 0.5 0.5"
-                position="0 0 0"
-                rotation="0 180 0">
+                position="0 0 0">
+        </a-entity>
+
+        <!-- Hat -->
+        <a-entity
+                id="hat"
+                scale="0.5 0.5 0.5"
+                position="0 1.2 0">
+        </a-entity>
+
+        <!-- Scarf -->
+        <a-entity
+                id="scarf"
+                scale="0.5 0.5 0.5"
+                position="0 0.8 0">
+        </a-entity>
+
+        <!-- Gloves -->
+        <a-entity
+                id="gloves"
+                scale="0.5 0.5 0.5"
+                position="0.3 0.6 0">
         </a-entity>
 
     </a-marker>
 
-    <!-- Camera -->
     <a-entity camera></a-entity>
 </a-scene>
+
+<script>
+    const hats = [
+        'assets/hat/hat_1_long.gltf',
+        'assets/hat/hat_2_short.gltf',
+        'assets/hat/hat_3_earmuff.gltf'
+    ];
+
+    const scarfs = [
+        'assets/scarf/scarf_1.gltf',
+        'assets/scarf/scarf_2.gltf'
+    ];
+
+    const gloves = [
+        'assets/gloves/gloves_1.gltf',
+        'assets/gloves/gloves_2.gltf',
+        'assets/gloves/gloves_3.gltf'
+    ];
+
+    let hatIndex = 0;
+    let scarfIndex = 0;
+    let glovesIndex = 0;
+
+    const hatEntity = document.getElementById('hat');
+    const scarfEntity = document.getElementById('scarf');
+    const glovesEntity = document.getElementById('gloves');
+
+    function updateHat() {
+        hatEntity.setAttribute('gltf-model', hats[hatIndex]);
+    }
+
+    function updateScarf() {
+        scarfEntity.setAttribute('gltf-model', scarfs[scarfIndex]);
+    }
+
+    function updateGloves() {
+        glovesEntity.setAttribute('gltf-model', gloves[glovesIndex]);
+    }
+
+    function nextHat() {
+        hatIndex = (hatIndex + 1) % hats.length;
+        updateHat();
+    }
+
+    function prevHat() {
+        hatIndex = (hatIndex - 1 + hats.length) % hats.length;
+        updateHat();
+    }
+
+    function nextScarf() {
+        scarfIndex = (scarfIndex + 1) % scarfs.length;
+        updateScarf();
+    }
+
+    function prevScarf() {
+        scarfIndex = (scarfIndex - 1 + scarfs.length) % scarfs.length;
+        updateScarf();
+    }
+
+    function nextGloves() {
+        glovesIndex = (glovesIndex + 1) % gloves.length;
+        updateGloves();
+    }
+
+    function prevGloves() {
+        glovesIndex = (glovesIndex - 1 + gloves.length) % gloves.length;
+        updateGloves();
+    }
+
+    // Charger les premiers accessoires
+    updateHat();
+    updateScarf();
+    updateGloves();
+</script>
 
 </body>
 </html>
