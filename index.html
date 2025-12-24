@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
 
+    <!-- Mobile safe -->
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
     <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
@@ -13,9 +17,19 @@
         body {
             margin: 0;
             overflow: hidden;
-            font-family: sans-serif;
+            font-family: system-ui, sans-serif;
         }
 
+        /* Empêche A-Frame de bloquer le touch */
+        a-scene {
+            pointer-events: none;
+        }
+
+        .ui-vertical, .ui-vertical * {
+            pointer-events: auto;
+        }
+
+        /* UI verticale */
         .ui-vertical {
             position: fixed;
             right: env(safe-area-inset-right, 12px);
@@ -29,22 +43,26 @@
 
         .control {
             background: rgba(0,0,0,0.65);
-            border-radius: 16px;
-            padding: 8px;
+            border-radius: 18px;
+            padding: 10px 8px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+        }
+
+        .control span {
+            font-size: 22px;
         }
 
         button {
-            width: 44px;
-            height: 44px;
-            font-size: 20px;
+            width: 48px;
+            height: 48px;
+            font-size: 22px;
             border-radius: 50%;
             border: none;
+            background: white;
         }
-
     </style>
 </head>
 
@@ -53,18 +71,21 @@
 <!-- UI HTML -->
 <div class="ui-vertical">
 
+    <!-- Hats -->
     <div class="control">
         <span>🎩</span>
         <button onclick="prevHat()">⬆️</button>
         <button onclick="nextHat()">⬇️</button>
     </div>
 
+    <!-- Scarfs -->
     <div class="control">
         <span>🧣</span>
         <button onclick="prevScarf()">⬆️</button>
         <button onclick="nextScarf()">⬇️</button>
     </div>
 
+    <!-- Gloves -->
     <div class="control">
         <span>🧤</span>
         <button onclick="prevGloves()">⬆️</button>
@@ -73,7 +94,6 @@
 
 </div>
 
-
 <a-scene
         embedded
         vr-mode-ui="enabled: false"
@@ -81,28 +101,10 @@
 
     <a-marker preset="hiro">
 
-        <!-- Snowman -->
+        <!-- Snowman complet (body + accessoires) -->
         <a-entity
                 id="snowman"
                 gltf-model="assets/snowman.glb"
-                scale="0.5 0.5 0.5">
-        </a-entity>
-
-        <!-- Hat -->
-        <a-entity
-                id="hat"
-                scale="0.5 0.5 0.5">
-        </a-entity>
-
-        <!-- Scarf -->
-        <a-entity
-                id="scarf"
-                scale="0.5 0.5 0.5">
-        </a-entity>
-
-        <!-- Gloves -->
-        <a-entity
-                id="gloves"
                 scale="0.5 0.5 0.5">
         </a-entity>
 
@@ -112,77 +114,89 @@
 </a-scene>
 
 <script>
-    const hats = [
-        'assets/hat/hat_1_long.gltf',
-        'assets/hat/hat_2_short.gltf',
-        'assets/hat/hat_3_earmuff.gltf'
-    ];
+    /* ========= VARIABLES ========= */
 
-    const scarfs = [
-        'assets/scarf/scarf_1.gltf',
-        'assets/scarf/scarf_2.gltf'
-    ];
+    const snowmanEl = document.getElementById('snowman');
 
-    const gloves = [
-        'assets/gloves/gloves_1.gltf',
-        'assets/gloves/gloves_2.gltf',
-        'assets/gloves/gloves_3.gltf'
-    ];
+    let hats = [];
+    let scarfs = [];
+    let gloves = [];
 
-    let hatIndex = 0;
-    let scarfIndex = 0;
-    let glovesIndex = 0;
+    let hatIndex = 0;     // 6 hats
+    let scarfIndex = 0;   // 2 scarfs
+    let glovesIndex = 0;  // 3 gloves
 
-    const hatEntity = document.getElementById('hat');
-    const scarfEntity = document.getElementById('scarf');
-    const glovesEntity = document.getElementById('gloves');
+    /* ========= UTILITAIRES ========= */
 
-    function updateHat() {
-        hatEntity.setAttribute('gltf-model', hats[hatIndex]);
+    function hideAll(list) {
+        list.forEach(obj => obj.visible = false);
     }
 
-    function updateScarf() {
-        scarfEntity.setAttribute('gltf-model', scarfs[scarfIndex]);
+    function showOne(list, index) {
+        hideAll(list);
+        if (list[index]) list[index].visible = true;
     }
 
-    function updateGloves() {
-        glovesEntity.setAttribute('gltf-model', gloves[glovesIndex]);
-    }
+    /* ========= CHARGEMENT DU MODELE ========= */
+
+    snowmanEl.addEventListener('model-loaded', () => {
+        const root = snowmanEl.getObject3D('mesh');
+
+        root.traverse(obj => {
+            if (!obj.isMesh) return;
+
+            if (obj.name.startsWith('hat_')) hats.push(obj);
+            if (obj.name.startsWith('scarf_')) scarfs.push(obj);
+            if (obj.name.startsWith('gloves_')) gloves.push(obj);
+        });
+
+        // Tri pour garantir l'ordre (_1, _2, _3...)
+        hats.sort((a,b) => a.name.localeCompare(b.name));
+        scarfs.sort((a,b) => a.name.localeCompare(b.name));
+        gloves.sort((a,b) => a.name.localeCompare(b.name));
+
+        // Tout cacher au départ
+        hideAll(hats);
+        hideAll(scarfs);
+        hideAll(gloves);
+
+        // Afficher les premiers
+        showOne(hats, hatIndex);
+        showOne(scarfs, scarfIndex);
+        showOne(gloves, glovesIndex);
+    });
+
+    /* ========= CONTROLES UI ========= */
 
     function nextHat() {
         hatIndex = (hatIndex + 1) % hats.length;
-        updateHat();
+        showOne(hats, hatIndex);
     }
 
     function prevHat() {
         hatIndex = (hatIndex - 1 + hats.length) % hats.length;
-        updateHat();
+        showOne(hats, hatIndex);
     }
 
     function nextScarf() {
         scarfIndex = (scarfIndex + 1) % scarfs.length;
-        updateScarf();
+        showOne(scarfs, scarfIndex);
     }
 
     function prevScarf() {
         scarfIndex = (scarfIndex - 1 + scarfs.length) % scarfs.length;
-        updateScarf();
+        showOne(scarfs, scarfIndex);
     }
 
     function nextGloves() {
         glovesIndex = (glovesIndex + 1) % gloves.length;
-        updateGloves();
+        showOne(gloves, glovesIndex);
     }
 
     function prevGloves() {
         glovesIndex = (glovesIndex - 1 + gloves.length) % gloves.length;
-        updateGloves();
+        showOne(gloves, glovesIndex);
     }
-
-    // Charger les premiers accessoires
-    updateHat();
-    updateScarf();
-    updateGloves();
 </script>
 
 </body>
