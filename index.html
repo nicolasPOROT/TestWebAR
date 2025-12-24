@@ -16,7 +16,6 @@
             font-family: sans-serif;
         }
 
-        /* UI verticale à droite */
         .ui-vertical {
             position: fixed;
             right: 12px;
@@ -51,7 +50,6 @@
 
 <body>
 
-<!-- UI -->
 <div class="ui-vertical">
 
     <div class="control">
@@ -87,10 +85,11 @@
     <a-marker preset="hiro">
 
         <!-- Snowman UNIQUE -->
+        <!-- Scale x2 -->
         <a-entity
                 id="snowman"
                 gltf-model="assets/snowman.glb"
-                scale="0.5 0.5 0.5">
+                scale="2 2 2"> <!-- anciennement 0.5 0.5 0.5, maintenant x2 = 1 -->
         </a-entity>
 
     </a-marker>
@@ -109,7 +108,6 @@
 
     const snowmanEl = document.getElementById('snowman');
 
-    /* Quand le modèle est chargé */
     snowmanEl.addEventListener('model-loaded', () => {
         const mesh = snowmanEl.getObject3D('mesh');
         if (!mesh) return;
@@ -120,23 +118,17 @@
             return;
         }
 
+        // Appliquer double-sided et transparence à TOUTES les meshes du modèle
         body.traverse((child) => {
             if (child.isMesh) {
-                // Force double-sided pour toutes les faces
                 child.material.side = THREE.DoubleSide;
-                // Active la transparence si présente
                 child.material.transparent = true;
             }
         });
 
-        // Récupère les accessoires
+        // Récupère tous les accessoires
         body.children.forEach(child => {
             child.visible = false;
-            // Décale légèrement pour éviter Z-fighting
-            if (child.name.startsWith('hat_') || child.name.startsWith('scarf_') || child.name.startsWith('gloves_')) {
-                child.position.z += 0.001;
-            }
-
             if (child.name.startsWith('hat_')) hats.push(child);
             if (child.name.startsWith('gloves_')) gloves.push(child);
             if (child.name.startsWith('scarf_')) scarves.push(child);
@@ -145,69 +137,24 @@
         console.log('Hats:', hats.length, 'Gloves:', gloves.length, 'Scarves:', scarves.length);
     });
 
-    /* Utils */
     function showOnly(list, index) {
         list.forEach((obj, i) => {
             obj.visible = i === index;
         });
     }
 
-    /* Hats */
-    function nextHat() {
-        if (!hats.length) return;
-        hatIndex = (hatIndex + 1) % hats.length;
-        showOnly(hats, hatIndex);
-    }
-
-    function prevHat() {
-        if (!hats.length) return;
-        hatIndex = (hatIndex - 1 + hats.length) % hats.length;
-        showOnly(hats, hatIndex);
-    }
-
-    /* Scarves */
-    function nextScarf() {
-        if (!scarves.length) return;
-        scarfIndex = (scarfIndex + 1) % scarves.length;
-        showOnly(scarves, scarfIndex);
-    }
-
-    function prevScarf() {
-        if (!scarves.length) return;
-        scarfIndex = (scarfIndex - 1 + scarves.length) % scarves.length;
-        showOnly(scarves, scarfIndex);
-    }
-
-    /* Gloves */
-    function nextGloves() {
-        if (!gloves.length) return;
-        gloveIndex = (gloveIndex + 1) % gloves.length;
-        showOnly(gloves, gloveIndex);
-    }
-
-    function prevGloves() {
-        if (!gloves.length) return;
-        gloveIndex = (gloveIndex - 1 + gloves.length) % gloves.length;
-        showOnly(gloves, gloveIndex);
-    }
+    function nextHat() { if (!hats.length) return; hatIndex = (hatIndex + 1) % hats.length; showOnly(hats, hatIndex); }
+    function prevHat() { if (!hats.length) return; hatIndex = (hatIndex - 1 + hats.length) % hats.length; showOnly(hats, hatIndex); }
+    function nextScarf() { if (!scarves.length) return; scarfIndex = (scarfIndex + 1) % scarves.length; showOnly(scarves, scarfIndex); }
+    function prevScarf() { if (!scarves.length) return; scarfIndex = (scarfIndex - 1 + scarves.length) % scarves.length; showOnly(scarves, scarfIndex); }
+    function nextGloves() { if (!gloves.length) return; gloveIndex = (gloveIndex + 1) % gloves.length; showOnly(gloves, gloveIndex); }
+    function prevGloves() { if (!gloves.length) return; gloveIndex = (gloveIndex - 1 + gloves.length) % gloves.length; showOnly(gloves, gloveIndex); }
 
     function randomize() {
-        if (hats.length) {
-            hatIndex = Math.floor(Math.random() * hats.length);
-            showOnly(hats, hatIndex);
-        }
-
-        if (scarves.length) {
-            scarfIndex = Math.floor(Math.random() * scarves.length);
-            showOnly(scarves, scarfIndex);
-        }
-
-        if (gloves.length) {
-            gloveIndex = Math.floor(Math.random() * gloves.length);
-            showOnly(gloves, gloveIndex);
-        }
+        if (hats.length) { hatIndex = Math.floor(Math.random() * hats.length); showOnly(hats, hatIndex); }
+        if (scarves.length) { scarfIndex = Math.floor(Math.random() * scarves.length); showOnly(scarves, scarfIndex); }
+        if (gloves.length) { gloveIndex = Math.floor(Math.random() * gloves.length); showOnly(gloves, gloveIndex); }
     }
-
 </script>
 
 </body>
