@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
 
+    <!-- A-Frame -->
     <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+
+    <!-- AR.js -->
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
     <style>
@@ -13,36 +16,35 @@
             font-family: sans-serif;
         }
 
-        /* UI verticale */
-        .ui {
+        /* UI verticale à droite */
+        .ui-vertical {
             position: fixed;
             right: 12px;
             top: 50%;
             transform: translateY(-50%);
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
             z-index: 999;
         }
 
-        .ui button,
-        .dev-ui button {
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            font-size: 14px;
-            background: #6a1b9a;
+        .control {
+            background: rgba(0,0,0,0.65);
+            border-radius: 16px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
             color: white;
         }
 
-        /* DEV UI */
-        .dev-ui {
-            position: fixed;
-            left: 12px;
-            bottom: 12px;
-            display: flex;
-            gap: 10px;
-            z-index: 999;
+        button {
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+            border-radius: 50%;
+            border: none;
         }
     </style>
 </head>
@@ -50,16 +52,26 @@
 <body>
 
 <!-- UI -->
-<div class="ui">
-    <button onclick="nextHat()">🎩 Hat</button>
-    <button onclick="nextGloves()">🧤 Gloves</button>
-    <button onclick="nextScarf()">🧣 Scarf</button>
-    <button onclick="randomize()">🎲 Random</button>
-    <button onclick="resetAll()">❌ None</button>
-</div>
+<div class="ui-vertical">
 
-<div class="dev-ui">
-    <button onclick="toggleDev()">DEV</button>
+    <div class="control">
+        <div>🎩</div>
+        <button onclick="prevHat()">⬆️</button>
+        <button onclick="nextHat()">⬇️</button>
+    </div>
+
+    <div class="control">
+        <div>🧣</div>
+        <button onclick="prevScarf()">⬆️</button>
+        <button onclick="nextScarf()">⬇️</button>
+    </div>
+
+    <div class="control">
+        <div>🧤</div>
+        <button onclick="prevGloves()">⬆️</button>
+        <button onclick="nextGloves()">⬇️</button>
+    </div>
+
 </div>
 
 <a-scene
@@ -67,33 +79,40 @@
         vr-mode-ui="enabled: false"
         arjs="sourceType: webcam; debugUIEnabled: false;">
 
-    <!-- Marker -->
-    <a-marker preset="hiro" id="marker">
-        <a-entity id="snowman-ar"
-                  gltf-model="assets/snowman.glb"
-                  scale="0.5 0.5 0.5">
-        </a-entity>
-    </a-marker>
+    <a-marker preset="hiro">
 
-    <!-- DEV MODE -->
-    <a-entity id="snowman-dev"
-              gltf-model="assets/snowman.glb"
-              position="0 0 -1"
-              scale="0.5 0.5 0.5"
-              visible="false">
-    </a-entity>
+        <!-- Snowman UNIQUE -->
+        <a-entity
+                id="snowman"
+                gltf-model="assets/snowman.glb"
+                scale="0.5 0.5 0.5">
+        </a-entity>
+
+    </a-marker>
 
     <a-entity camera></a-entity>
 </a-scene>
 
 <script>
-    let snowman;
-    let hats = [], gloves = [], scarves = [];
-    let h = -1, g = -1, s = -1;
-    let dev = false;
+    let hats = [];
+    let gloves = [];
+    let scarves = [];
 
-    function initAccessories(model) {
-        const body = model.getObject3D('mesh').getObjectByName('body_snowman');
+    let hatIndex = -1;
+    let gloveIndex = -1;
+    let scarfIndex = -1;
+
+    const snowmanEl = document.getElementById('snowman');
+
+    /* Quand le modèle est chargé */
+    snowmanEl.addEventListener('model-loaded', () => {
+        const mesh = snowmanEl.getObject3D('mesh');
+        const body = mesh.getObjectByName('body_snowman');
+
+        if (!body) {
+            console.error('body_snowman introuvable');
+            return;
+        }
 
         body.children.forEach(child => {
             child.visible = false;
@@ -102,53 +121,56 @@
             if (child.name.startsWith('gloves_')) gloves.push(child);
             if (child.name.startsWith('scarf_')) scarves.push(child);
         });
-    }
 
-    function showOnly(list, index) {
-        list.forEach((m, i) => m.visible = i === index);
-    }
-
-    AFRAME.scenes[0].addEventListener('model-loaded', e => {
-        snowman = e.target;
-        initAccessories(snowman);
+        console.log('Hats:', hats.length);
+        console.log('Gloves:', gloves.length);
+        console.log('Scarves:', scarves.length);
     });
 
-    /* Controls */
+    /* Utils */
+    function showOnly(list, index) {
+        list.forEach((obj, i) => {
+            obj.visible = i === index;
+        });
+    }
+
+    /* Hats */
     function nextHat() {
-        h = (h + 1) % hats.length;
-        showOnly(hats, h);
+        if (!hats.length) return;
+        hatIndex = (hatIndex + 1) % hats.length;
+        showOnly(hats, hatIndex);
     }
 
-    function nextGloves() {
-        g = (g + 1) % gloves.length;
-        showOnly(gloves, g);
+    function prevHat() {
+        if (!hats.length) return;
+        hatIndex = (hatIndex - 1 + hats.length) % hats.length;
+        showOnly(hats, hatIndex);
     }
 
+    /* Scarves */
     function nextScarf() {
-        s = (s + 1) % scarves.length;
-        showOnly(scarves, s);
+        if (!scarves.length) return;
+        scarfIndex = (scarfIndex + 1) % scarves.length;
+        showOnly(scarves, scarfIndex);
     }
 
-    function resetAll() {
-        hats.concat(gloves, scarves).forEach(m => m.visible = false);
-        h = g = s = -1;
+    function prevScarf() {
+        if (!scarves.length) return;
+        scarfIndex = (scarfIndex - 1 + scarves.length) % scarves.length;
+        showOnly(scarves, scarfIndex);
     }
 
-    function randomize() {
-        h = Math.floor(Math.random() * hats.length);
-        g = Math.floor(Math.random() * gloves.length);
-        s = Math.floor(Math.random() * scarves.length);
-
-        showOnly(hats, h);
-        showOnly(gloves, g);
-        showOnly(scarves, s);
+    /* Gloves */
+    function nextGloves() {
+        if (!gloves.length) return;
+        gloveIndex = (gloveIndex + 1) % gloves.length;
+        showOnly(gloves, gloveIndex);
     }
 
-    function toggleDev() {
-        dev = !dev;
-        document.getElementById('marker').setAttribute('visible', !dev);
-        document.getElementById('snowman-ar').setAttribute('visible', !dev);
-        document.getElementById('snowman-dev').setAttribute('visible', dev);
+    function prevGloves() {
+        if (!gloves.length) return;
+        gloveIndex = (gloveIndex - 1 + gloves.length) % gloves.length;
+        showOnly(gloves, gloveIndex);
     }
 </script>
 
