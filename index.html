@@ -3,63 +3,46 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-    <!-- A-Frame -->
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-
-    <!-- AR.js -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            font-family: system-ui, sans-serif;
-        }
-
-        /* Ne pas bloquer le touch */
-        a-scene {
-            pointer-events: none;
-        }
-        .ui-vertical, .ui-vertical * {
-            pointer-events: auto;
+            font-family: sans-serif;
         }
 
         /* UI verticale */
-        .ui-vertical {
+        .ui {
             position: fixed;
-            right: env(safe-area-inset-right, 12px);
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             display: flex;
             flex-direction: column;
-            gap: 14px;
-            z-index: 9999;
+            gap: 12px;
+            z-index: 999;
         }
 
-        .control {
-            background: rgba(0,0,0,0.65);
-            border-radius: 18px;
-            padding: 10px 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .control span {
-            font-size: 22px;
-        }
-
-        button {
-            width: 48px;
-            height: 48px;
-            font-size: 22px;
-            border-radius: 50%;
+        .ui button,
+        .dev-ui button {
+            padding: 12px;
+            border-radius: 12px;
             border: none;
-            background: white;
+            font-size: 14px;
+            background: #6a1b9a;
+            color: white;
+        }
+
+        /* DEV UI */
+        .dev-ui {
+            position: fixed;
+            left: 12px;
+            bottom: 12px;
+            display: flex;
+            gap: 10px;
+            z-index: 999;
         }
     </style>
 </head>
@@ -67,26 +50,16 @@
 <body>
 
 <!-- UI -->
-<div class="ui-vertical">
+<div class="ui">
+    <button onclick="nextHat()">🎩 Hat</button>
+    <button onclick="nextGloves()">🧤 Gloves</button>
+    <button onclick="nextScarf()">🧣 Scarf</button>
+    <button onclick="randomize()">🎲 Random</button>
+    <button onclick="resetAll()">❌ None</button>
+</div>
 
-    <div class="control">
-        <span>🎩</span>
-        <button onclick="prevHat()">⬆️</button>
-        <button onclick="nextHat()">⬇️</button>
-    </div>
-
-    <div class="control">
-        <span>🧣</span>
-        <button onclick="prevScarf()">⬆️</button>
-        <button onclick="nextScarf()">⬇️</button>
-    </div>
-
-    <div class="control">
-        <span>🧤</span>
-        <button onclick="prevGloves()">⬆️</button>
-        <button onclick="nextGloves()">⬇️</button>
-    </div>
-
+<div class="dev-ui">
+    <button onclick="toggleDev()">DEV</button>
 </div>
 
 <a-scene
@@ -94,111 +67,88 @@
         vr-mode-ui="enabled: false"
         arjs="sourceType: webcam; debugUIEnabled: false;">
 
-    <a-marker preset="hiro">
-
-        <a-entity
-                id="snowman"
-                gltf-model="assets/snowman.glb"
-                scale="0.5 0.5 0.5">
+    <!-- Marker -->
+    <a-marker preset="hiro" id="marker">
+        <a-entity id="snowman-ar"
+                  gltf-model="assets/snowman.glb"
+                  scale="0.5 0.5 0.5">
         </a-entity>
-
     </a-marker>
+
+    <!-- DEV MODE -->
+    <a-entity id="snowman-dev"
+              gltf-model="assets/snowman.glb"
+              position="0 0 -1"
+              scale="0.5 0.5 0.5"
+              visible="false">
+    </a-entity>
 
     <a-entity camera></a-entity>
 </a-scene>
 
 <script>
-    /* ========= VARIABLES ========= */
+    let snowman;
+    let hats = [], gloves = [], scarves = [];
+    let h = -1, g = -1, s = -1;
+    let dev = false;
 
-    const snowmanEl = document.getElementById('snowman');
+    function initAccessories(model) {
+        const body = model.getObject3D('mesh').getObjectByName('body_snowman');
 
-    let hats = [];
-    let scarfs = [];
-    let gloves = [];
+        body.children.forEach(child => {
+            child.visible = false;
 
-    let hatIndex = 0;
-    let scarfIndex = 0;
-    let glovesIndex = 0;
-
-    /* ========= UTILS ========= */
-
-    function hideAll(list) {
-        list.forEach(o => o.visible = false);
-    }
-
-    function showOne(list, index) {
-        hideAll(list);
-        if (list[index]) list[index].visible = true;
-    }
-
-    /* ========= MODEL LOAD ========= */
-
-    snowmanEl.addEventListener('model-loaded', () => {
-
-        const root = snowmanEl.getObject3D('mesh');
-
-        // 🔑 Récupération DU body
-        const body = root.getObjectByName('body_snowman');
-
-        if (!body) {
-            console.error('❌ body_snowman introuvable dans le GLB');
-            return;
-        }
-
-        body.traverse(obj => {
-            if (!obj.isMesh) return;
-
-            if (obj.name.startsWith('hat_')) hats.push(obj);
-            if (obj.name.startsWith('scarf_')) scarfs.push(obj);
-            if (obj.name.startsWith('gloves_')) gloves.push(obj);
+            if (child.name.startsWith('hat_')) hats.push(child);
+            if (child.name.startsWith('gloves_')) gloves.push(child);
+            if (child.name.startsWith('scarf_')) scarves.push(child);
         });
+    }
 
-        // Tri sécurisé
-        hats.sort((a,b) => a.name.localeCompare(b.name));
-        scarfs.sort((a,b) => a.name.localeCompare(b.name));
-        gloves.sort((a,b) => a.name.localeCompare(b.name));
+    function showOnly(list, index) {
+        list.forEach((m, i) => m.visible = i === index);
+    }
 
-        // Tout cacher
-        hideAll(hats);
-        hideAll(scarfs);
-        hideAll(gloves);
-
-        // Afficher les premiers
-        showOne(hats, hatIndex);
-        showOne(scarfs, scarfIndex);
-        showOne(gloves, glovesIndex);
+    AFRAME.scenes[0].addEventListener('model-loaded', e => {
+        snowman = e.target;
+        initAccessories(snowman);
     });
 
-    /* ========= CONTROLES ========= */
-
+    /* Controls */
     function nextHat() {
-        hatIndex = (hatIndex + 1) % hats.length;
-        showOne(hats, hatIndex);
-    }
-
-    function prevHat() {
-        hatIndex = (hatIndex - 1 + hats.length) % hats.length;
-        showOne(hats, hatIndex);
-    }
-
-    function nextScarf() {
-        scarfIndex = (scarfIndex + 1) % scarfs.length;
-        showOne(scarfs, scarfIndex);
-    }
-
-    function prevScarf() {
-        scarfIndex = (scarfIndex - 1 + scarfs.length) % scarfs.length;
-        showOne(scarfs, scarfIndex);
+        h = (h + 1) % hats.length;
+        showOnly(hats, h);
     }
 
     function nextGloves() {
-        glovesIndex = (glovesIndex + 1) % gloves.length;
-        showOne(gloves, glovesIndex);
+        g = (g + 1) % gloves.length;
+        showOnly(gloves, g);
     }
 
-    function prevGloves() {
-        glovesIndex = (glovesIndex - 1 + gloves.length) % gloves.length;
-        showOne(gloves, glovesIndex);
+    function nextScarf() {
+        s = (s + 1) % scarves.length;
+        showOnly(scarves, s);
+    }
+
+    function resetAll() {
+        hats.concat(gloves, scarves).forEach(m => m.visible = false);
+        h = g = s = -1;
+    }
+
+    function randomize() {
+        h = Math.floor(Math.random() * hats.length);
+        g = Math.floor(Math.random() * gloves.length);
+        s = Math.floor(Math.random() * scarves.length);
+
+        showOnly(hats, h);
+        showOnly(gloves, g);
+        showOnly(scarves, s);
+    }
+
+    function toggleDev() {
+        dev = !dev;
+        document.getElementById('marker').setAttribute('visible', !dev);
+        document.getElementById('snowman-ar').setAttribute('visible', !dev);
+        document.getElementById('snowman-dev').setAttribute('visible', dev);
     }
 </script>
 
