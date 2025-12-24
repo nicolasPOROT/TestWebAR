@@ -72,6 +72,11 @@
         <button onclick="nextGloves()">⬇️</button>
     </div>
 
+    <div class="control">
+        <div>🎲</div>
+        <button onclick="randomize()">Random</button>
+    </div>
+
 </div>
 
 <a-scene
@@ -107,24 +112,37 @@
     /* Quand le modèle est chargé */
     snowmanEl.addEventListener('model-loaded', () => {
         const mesh = snowmanEl.getObject3D('mesh');
-        const body = mesh.getObjectByName('body_snowman');
+        if (!mesh) return;
 
+        const body = mesh.getObjectByName('body_snowman');
         if (!body) {
             console.error('body_snowman introuvable');
             return;
         }
 
+        body.traverse((child) => {
+            if (child.isMesh) {
+                // Force double-sided pour toutes les faces
+                child.material.side = THREE.DoubleSide;
+                // Active la transparence si présente
+                child.material.transparent = true;
+            }
+        });
+
+        // Récupère les accessoires
         body.children.forEach(child => {
             child.visible = false;
+            // Décale légèrement pour éviter Z-fighting
+            if (child.name.startsWith('hat_') || child.name.startsWith('scarf_') || child.name.startsWith('gloves_')) {
+                child.position.z += 0.001;
+            }
 
             if (child.name.startsWith('hat_')) hats.push(child);
             if (child.name.startsWith('gloves_')) gloves.push(child);
             if (child.name.startsWith('scarf_')) scarves.push(child);
         });
 
-        console.log('Hats:', hats.length);
-        console.log('Gloves:', gloves.length);
-        console.log('Scarves:', scarves.length);
+        console.log('Hats:', hats.length, 'Gloves:', gloves.length, 'Scarves:', scarves.length);
     });
 
     /* Utils */
@@ -172,6 +190,24 @@
         gloveIndex = (gloveIndex - 1 + gloves.length) % gloves.length;
         showOnly(gloves, gloveIndex);
     }
+
+    function randomize() {
+        if (hats.length) {
+            hatIndex = Math.floor(Math.random() * hats.length);
+            showOnly(hats, hatIndex);
+        }
+
+        if (scarves.length) {
+            scarfIndex = Math.floor(Math.random() * scarves.length);
+            showOnly(scarves, scarfIndex);
+        }
+
+        if (gloves.length) {
+            gloveIndex = Math.floor(Math.random() * gloves.length);
+            showOnly(gloves, gloveIndex);
+        }
+    }
+
 </script>
 
 </body>
