@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
 
-    <!-- Mobile safe -->
     <meta name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
@@ -20,11 +19,10 @@
             font-family: system-ui, sans-serif;
         }
 
-        /* Empêche A-Frame de bloquer le touch */
+        /* Ne pas bloquer le touch */
         a-scene {
             pointer-events: none;
         }
-
         .ui-vertical, .ui-vertical * {
             pointer-events: auto;
         }
@@ -68,24 +66,21 @@
 
 <body>
 
-<!-- UI HTML -->
+<!-- UI -->
 <div class="ui-vertical">
 
-    <!-- Hats -->
     <div class="control">
         <span>🎩</span>
         <button onclick="prevHat()">⬆️</button>
         <button onclick="nextHat()">⬇️</button>
     </div>
 
-    <!-- Scarfs -->
     <div class="control">
         <span>🧣</span>
         <button onclick="prevScarf()">⬆️</button>
         <button onclick="nextScarf()">⬇️</button>
     </div>
 
-    <!-- Gloves -->
     <div class="control">
         <span>🧤</span>
         <button onclick="prevGloves()">⬆️</button>
@@ -101,7 +96,6 @@
 
     <a-marker preset="hiro">
 
-        <!-- Snowman complet (body + accessoires) -->
         <a-entity
                 id="snowman"
                 gltf-model="assets/snowman.glb"
@@ -122,14 +116,14 @@
     let scarfs = [];
     let gloves = [];
 
-    let hatIndex = 0;     // 6 hats
-    let scarfIndex = 0;   // 2 scarfs
-    let glovesIndex = 0;  // 3 gloves
+    let hatIndex = 0;
+    let scarfIndex = 0;
+    let glovesIndex = 0;
 
-    /* ========= UTILITAIRES ========= */
+    /* ========= UTILS ========= */
 
     function hideAll(list) {
-        list.forEach(obj => obj.visible = false);
+        list.forEach(o => o.visible = false);
     }
 
     function showOne(list, index) {
@@ -137,12 +131,21 @@
         if (list[index]) list[index].visible = true;
     }
 
-    /* ========= CHARGEMENT DU MODELE ========= */
+    /* ========= MODEL LOAD ========= */
 
     snowmanEl.addEventListener('model-loaded', () => {
+
         const root = snowmanEl.getObject3D('mesh');
 
-        root.traverse(obj => {
+        // 🔑 Récupération DU body
+        const body = root.getObjectByName('body_snowman');
+
+        if (!body) {
+            console.error('❌ body_snowman introuvable dans le GLB');
+            return;
+        }
+
+        body.traverse(obj => {
             if (!obj.isMesh) return;
 
             if (obj.name.startsWith('hat_')) hats.push(obj);
@@ -150,12 +153,12 @@
             if (obj.name.startsWith('gloves_')) gloves.push(obj);
         });
 
-        // Tri pour garantir l'ordre (_1, _2, _3...)
+        // Tri sécurisé
         hats.sort((a,b) => a.name.localeCompare(b.name));
         scarfs.sort((a,b) => a.name.localeCompare(b.name));
         gloves.sort((a,b) => a.name.localeCompare(b.name));
 
-        // Tout cacher au départ
+        // Tout cacher
         hideAll(hats);
         hideAll(scarfs);
         hideAll(gloves);
@@ -166,7 +169,7 @@
         showOne(gloves, glovesIndex);
     });
 
-    /* ========= CONTROLES UI ========= */
+    /* ========= CONTROLES ========= */
 
     function nextHat() {
         hatIndex = (hatIndex + 1) % hats.length;
